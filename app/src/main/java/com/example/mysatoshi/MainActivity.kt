@@ -1,4 +1,5 @@
 package com.example.mysatoshi
+
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -15,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -146,6 +148,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun lightColorScheme(): ColorScheme {
+        return lightColorScheme(
+            primary = Color(0xFF4CAF50), // Couleur principale (vert)
+            onPrimary = Color.White,
+            secondary = Color(0xFF81C784), // Couleur secondaire (vert clair)
+            onSecondary = Color.Black
+        )
     }
 }
 
@@ -372,8 +383,6 @@ fun SettingsScreen(
             ) {
                 Text("KI")
             }
-
-
         }
     }
 }
