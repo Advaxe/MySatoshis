@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#2196F3"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Titre de l'application -->
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:gravity="center"
+        android:text="SatoshiBdi - Convertisseur BIF vers Sats"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <!-- Champ pour entrer le montant en BIF -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="Montant en BIF :" />
+
+    <EditText
+        android:id="@+id/inputBif"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Entrez le montant BIF"
+        android:inputType="numberDecimal"
+        android:textSize="18sp" />
+
+    <!-- Champ pour entrer le taux USD/BIF (Marché normal) -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="Taux USD/BIF (Marché normal) :" />
+
+    <EditText
+        android:id="@+id/inputUsdNormal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Taux marché normal"
+        android:inputType="numberDecimal"
+        android:text="2973.42"
+        android:textSize="18sp" />
+
+    <!-- Champ pour entrer le taux USD/BIF (Marché noir) -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="Taux USD/BIF (Marché noir) :" />
+
+    <EditText
+        android:id="@+id/inputUsdNoir"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Taux marché noir"
+        android:inputType="numberDecimal"
+        android:text="7500"
+        android:textSize="18sp" />
+
+    <!-- Champ pour entrer le prix du BTC en USD -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="Prix du BTC en USD :" />
+
+    <EditText
+        android:id="@+id/inputBtcUsd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Prix du BTC"
+        android:inputType="numberDecimal"
+        android:text="82247.08"
+        android:textSize="18sp" />
+
+    <!-- Résultats des calculs -->
+    <TextView
+        android:id="@+id/resultNormal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Satoshis (Marché normal) :"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/resultNoir"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="10dp"
+        android:text="Satoshis (Marché noir) :"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+<ImageView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+  android:src="@drawable/satoshibdi_background"
+    />
+</LinearLayout>
