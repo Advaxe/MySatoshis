@@ -2,14 +2,21 @@
 My Satoshis est une application Android conçue pour faciliter la conversion entre différentes devises numériques, notamment BTC, SATS, USD et BIF. Développée avec Jetpack Compose, l'application offre une interface utilisateur moderne et intuitive, permettant aux utilisateurs de convertir rapidement des montants tout en affichant les taux de change actuels.
 ## Fonctionnalités
 •	Conversion Multidevise : Convertissez facilement entre BTC, SATS, USD et BIF.
+
 •	Taux de Change Personnalisables : Modifiez les taux de conversion USD/BIF et le prix du BTC en USD dans les paramètres.
+
 •	Support Multilingue : L'application est disponible en quatre langues dont le français, l'anglais, le kirundi et le swahili.
+
 •	Interface Réactive : Utilise Jetpack Compose pour une expérience utilisateur fluide et réactive.
-Technologies Utilisées
+## Technologies Utilisées
 •	Kotlin
+
 •	Jetpack Compose
+
 •	Android SDK
+
 •	Gradle
+
 ## Installation
 1.	Clonez le dépôt : 
 git clone https://github.com/Advaxe/MySatoshis.git
