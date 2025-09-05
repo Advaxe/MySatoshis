@@ -20,24 +20,31 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.http.GET
+import retrofit2.http.Path
+import retrofit2.converter.gson.GsonConverterFactory
 import java.text.NumberFormat
 import java.util.*
 
 object Strings {
-    val texts = mapOf(
+    var texts = mapOf(
         "fr" to mapOf(
-            "title" to "CONVERTISSEUR NUMÉRIQUE",
+            "title" to "CONVERTISSEUR DE MONNAIE",
             "amount" to "Montant en",
             "result" to "Résultat",
             "settings" to "Paramètres",
             "about" to "À propos",
-            "footer" to "BTC SHULE © My Satoshis v2.0, 2025",
+            "footer" to "Copyrights © My Satoshis  v2.0, 2025",
             "conversion_settings" to "Paramètres de conversion",
             "taux" to "Taux USD/BIF",
             "prix" to "Prix du BTC en USD",
             "langue" to "Langue",
             "retour" to "Retour",
-            "about_content" to "Convertisseur numérique BTC, SATS, USD, BIF\nDéveloppé à Gitega, 2025\nBTC SHULE"
+            "about_content" to "Convertisseur numérique BTC, SATS, USD, BIF\n Cette application vous permet de fixer le taux et faire les conversions variantes. \nDéveloppé à Gitega, par Advaxe pour la communauté burundaise vivant dans les localités à faire connexion internet\n  2025\nMy Satoshis"
         ),
         "en" to mapOf(
             "title" to "DIGITAL CONVERTER",
@@ -88,34 +95,52 @@ object Strings {
     }
 }
 
+interface YadioApiService {
+    @GET("convert/{amount}/{from}/{to}")
+    fun convertCurrency(
+        @Path("amount") amount: Double,
+        @Path("from") from: String,
+        @Path("to") to: String
+    ): Call<ConversionResponse>
+}
+
+data class ConversionResponse(
+    var result: Double
+)
+
 class MainActivity : ComponentActivity() {
 
-    private fun saveRates(context: Context, taux: String, prix: String) {
-        val prefs = context.getSharedPreferences("rates", Context.MODE_PRIVATE)
-        prefs.edit().apply {
-            putString("taux", taux)
-            putString("prix", prix)
-            apply()
-        }
-    }
-
-    private fun loadRates(context: Context): Pair<String, String> {
-        val prefs = context.getSharedPreferences("rates", Context.MODE_PRIVATE)
-        val taux = prefs.getString("taux", "7700") ?: "7700"
-        val prix = prefs.getString("prix", "116500") ?: "116500"
-        return Pair(taux, prix)
-    }
+    private lateinit var apiService: YadioApiService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val (savedTaux, savedPrix) = loadRates(this)
+
+        // Configuration de Retrofit
+        var retrofit = Retrofit.Builder()
+            .baseUrl("https://api.yadio.io/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        apiService = retrofit.create(YadioApiService::class.java)
 
         setContent {
             MaterialTheme(colorScheme = lightColorScheme()) {
                 var screen by remember { mutableStateOf("main") }
-                var tauxUsdBif by remember { mutableStateOf(savedTaux) }
-                var prixBtcUsd by remember { mutableStateOf(savedPrix) }
+                var tauxUsdBif by remember { mutableStateOf("7700") }
+                var prixBtcUsd by remember { mutableStateOf("116500") }
                 var language by remember { mutableStateOf("fr") }
+                var conversionResult by remember { mutableStateOf(0.0) }
+                var montant by remember { mutableStateOf("") }
+                var sourceDevise by remember { mutableStateOf("BTC") }
+                var targetDevise by remember { mutableStateOf("SATS") }
+
+                LaunchedEffect(Unit) {
+                    // Charger les taux initiaux
+                    loadRates(this@MainActivity) { loadedTaux, loadedPrix ->
+                        tauxUsdBif = loadedTaux
+                        prixBtcUsd = loadedPrix
+                    }
+                }
 
                 Surface(modifier = Modifier.fillMaxSize()) {
                     when (screen) {
@@ -123,6 +148,15 @@ class MainActivity : ComponentActivity() {
                             tauxUsdBif,
                             prixBtcUsd,
                             language,
+                            montant,
+                            conversionResult,
+                            sourceDevise,
+                            targetDevise,
+                            onConvert = { amount ->
+                                performConversion(amount.toDoubleOrNull() ?: 0.0, sourceDevise, targetDevise) { result ->
+                                    conversionResult = result
+                                }
+                            },
                             onSettingsClick = { screen = "settings" },
                             onAboutClick = { screen = "about" }
                         )
@@ -150,6 +184,39 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun performConversion(amount: Double, from: String, to: String, callback: (Double) -> Unit) {
+        apiService.convertCurrency(amount, from, to).enqueue(object : Callback<ConversionResponse> {
+            override fun onResponse(call: Call<ConversionResponse>, response: Response<ConversionResponse>) {
+                if (response.isSuccessful) {
+                    var result = response.body()?.result ?: 0.0
+                    callback(result)
+                } else {
+                    callback(0.0) // Gestion d'erreur
+                }
+            }
+
+            override fun onFailure(call: Call<ConversionResponse>, t: Throwable) {
+                callback(0.0) // Gestion d'erreur
+            }
+        })
+    }
+
+    private fun loadRates(context: Context, callback: (String, String) -> Unit) {
+        var prefs = context.getSharedPreferences("rates", Context.MODE_PRIVATE)
+        var taux = prefs.getString("taux", "7700") ?: "7700"
+        var prix = prefs.getString("prix", "116500") ?: "116500"
+        callback(taux, prix)
+    }
+
+    private fun saveRates(context: Context, taux: String, prix: String) {
+        var prefs = context.getSharedPreferences("rates", Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            putString("taux", taux)
+            putString("prix", prix)
+            apply()
+        }
+    }
+
     private fun lightColorScheme(): ColorScheme {
         return lightColorScheme(
             primary = Color(0xFF4CAF50), // Couleur principale (vert)
@@ -165,40 +232,16 @@ fun MainScreen(
     tauxUsdBif: String,
     prixBtcUsd: String,
     language: String,
+    montant: String,
+    conversionResult: Double,
+    sourceDevise: String,
+    targetDevise: String,
+    onConvert: (String) -> Unit,
     onSettingsClick: () -> Unit,
     onAboutClick: () -> Unit
 ) {
-    val t = { key: String -> Strings.get(key, language) }
-    val devises = listOf("BTC", "SATS", "USD", "BIF")
-
-    var sourceDevise by remember { mutableStateOf("BTC") }
-    var targetDevise by remember { mutableStateOf("SATS") }
-    var montant by remember { mutableStateOf("") }
-
-    val taux = tauxUsdBif.toDoubleOrNull() ?: 1.0
-    val prix = prixBtcUsd.toDoubleOrNull() ?: 1.0
-    val satUsd = prix / 100_000_000
-    val montantValue = montant.toDoubleOrNull() ?: 0.0
-    val format = NumberFormat.getNumberInstance(Locale.US).apply {
-        minimumFractionDigits = 2
-        maximumFractionDigits = 8
-    }
-
-    val conversion = when ("$sourceDevise → $targetDevise") {
-        "BTC → SATS" -> montantValue * 100_000_000
-        "BTC → USD" -> montantValue * prix
-        "BTC → BIF" -> montantValue * prix * taux
-        "SATS → BTC" -> montantValue / 100_000_000
-        "SATS → USD" -> montantValue * satUsd
-        "SATS → BIF" -> montantValue * satUsd * taux
-        "USD → BTC" -> montantValue / prix
-        "USD → SATS" -> (montantValue / prix) * 100_000_000
-        "USD → BIF" -> montantValue * taux
-        "BIF → BTC" -> (montantValue / taux) / prix
-        "BIF → SATS" -> (montantValue / taux) / satUsd
-        "BIF → USD" -> montantValue / taux
-        else -> 0.0
-    }
+    var t = { key: String -> Strings.get(key, language) }
+    var devises = listOf("BTC", "SATS", "USD", "BIF")
 
     Column(
         modifier = Modifier
@@ -219,15 +262,28 @@ fun MainScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 devises.forEach { base ->
+                  //var expanded by remember { mutableStateOf(false) }
+//                    val backgroundColor by animateColorAsState(
+//                        if (sourceDevise == base) MaterialTheme.colorScheme.primary
+//                        else MaterialTheme.colorScheme.secondaryContainer
+//                    )
+//                    val contentColor by animateColorAsState(
+//                        if (sourceDevise == base) MaterialTheme.colorScheme.onPrimary
+//                        else MaterialTheme.colorScheme.onSecondaryContainer
+//                    )
                     var expanded by remember { mutableStateOf(false) }
-                    val backgroundColor by animateColorAsState(
-                        if (sourceDevise == base) MaterialTheme.colorScheme.primary
+
+                    // Récupérer les couleurs animées sans réaffectation
+                    val backgroundColor = animateColorAsState(
+                        targetValue = if (sourceDevise == base) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.secondaryContainer
-                    )
-                    val contentColor by animateColorAsState(
-                        if (sourceDevise == base) MaterialTheme.colorScheme.onPrimary
+                    ).value
+
+                    val contentColor = animateColorAsState(
+                        targetValue = if (sourceDevise == base) MaterialTheme.colorScheme.onPrimary
                         else MaterialTheme.colorScheme.onSecondaryContainer
-                    )
+                    ).value
+
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Button(
@@ -263,9 +319,13 @@ fun MainScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Button(onClick = { onConvert(montant) }) {
+                Text("Convertir")
+            }
+
             SelectionContainer {
                 Text(
-                    "${t("result")} : ${format.format(conversion)} $targetDevise",
+                    "${t("result")} : ${NumberFormat.getNumberInstance(Locale.US).format(conversionResult)} $targetDevise",
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -308,7 +368,7 @@ fun SettingsScreen(
     onLanguageChange: (String) -> Unit,
     onBack: () -> Unit
 ) {
-    val t = { key: String -> Strings.get(key, language) }
+    var t = { key: String -> Strings.get(key, language) }
 
     Column(
         modifier = Modifier
@@ -389,7 +449,7 @@ fun SettingsScreen(
 
 @Composable
 fun AboutScreen(language: String, onBack: () -> Unit) {
-    val t = { key: String -> Strings.get(key, language) }
+    var t = { key: String -> Strings.get(key, language) }
 
     Column(
         modifier = Modifier
